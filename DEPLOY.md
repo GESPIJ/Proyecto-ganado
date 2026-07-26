@@ -4,7 +4,8 @@ Todo corre en la **misma instancia de Lightsail** que trading, con **pm2** y acc
 **Tailscale**. Dos procesos: el backend (API) y el front (estático).
 
 - Backend `ganado-api` → puerto **3090** (trading usa 3080/3081).
-- Front `ganado-web` → puerto **8090** (estático con `pm2 serve`).
+- Front `ganado-web` → puerto **8091** (estático con `serve.cjs`). OJO: el **8090 ya lo usa el
+  dashboard de trading**, no reutilizarlo.
 - Mongo: **mismo cluster Atlas de trading**, base de datos **`ganaderia`**, colección **`ganado`**
   (Mongoose las crea solas en la primera escritura).
 
@@ -39,10 +40,10 @@ cd /home/bot/apps/proyecto-ganado
 npm install
 echo 'VITE_API_URL=http://<host-tailscale>:3090/api' > .env   # el hostname del box en el tailnet
 npm run build                            # genera dist/
-pm2 start serve.cjs --name ganado-web   # servidor estático sin dependencias
+PORT=8091 pm2 start serve.cjs --name ganado-web   # 8091: el 8090 es del dashboard de trading
 sudo pm2 save
 ```
-Abrir `http://<host-tailscale>:8090` desde un dispositivo en el tailnet → pega la misma `API_KEY`.
+Abrir `http://<IP-o-host>:8091` desde un dispositivo en el tailnet → pega la misma `API_KEY`.
 
 ## 4. Actualizar (releases futuros)
 ```bash
@@ -54,7 +55,7 @@ cd ..    && npm install && npm run build && pm2 restart ganado-web
 ## Notas
 - **Atlas**: verificar que el usuario de la conexión tenga `readWrite` sobre la base `ganaderia`
   (si está limitado solo a `test`, otorgar acceso a `ganaderia`). El allowlist de IP ya cubre el box.
-- **Puertos 3090/8090**: mantenerlos cerrados al internet público (como 3080/3081); el acceso es por Tailscale.
+- **Puertos 3090/8091**: abrir en el firewall de Lightsail para acceso por IP pública (la API queda protegida por `x-api-key`). El 8090 es del dashboard de trading — no tocarlo.
 - **Fotos**: sin `S3_ANIMAL_BUCKET` la app funciona igual; el endpoint de foto devuelve `fotoUrl:null`
   y la UI muestra "no disponible". Para activarlas: bucket con lectura pública en `animals/*` + credenciales con `s3:PutObject`.
 - **Modo local**: sin `VITE_API_URL` el front corre 100% en localStorage (sin gate) — útil para demo/offline.
