@@ -22,3 +22,6 @@ vite.config.d.ts
 logs
 *.log
 npm-debug.log*
+
+# vite-plugin-pwa (dev)
+dev-dist
