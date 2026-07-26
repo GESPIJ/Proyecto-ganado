@@ -12,6 +12,7 @@ import RegistrosPanel from '../components/RegistrosPanel';
 import ResultCard from '../components/ResultCard';
 import { Empty, ErrorState, Loading } from '../components/States';
 import { edadDesde, fmtKg, fmtMoney, fmtNum } from '../lib/format';
+import { uid } from '../lib/id';
 
 const TIPOS: { value: AnimalTipo; label: string }[] = [
   { value: 'vaca', label: 'Vaca' },
@@ -49,7 +50,7 @@ function today(): string {
 
 function nuevoAnimal(): Animal {
   return {
-    id: crypto.randomUUID(),
+    id: uid(),
     identificador: '',
     tipo: 'maute',
     estado: 'activo',

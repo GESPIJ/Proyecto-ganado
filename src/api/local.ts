@@ -1,5 +1,6 @@
 import type { Animal, DataSource, Registro } from '../types';
 import { STORAGE_KEY } from './client';
+import { uid } from '../lib/id';
 
 // Normaliza animales guardados antes de añadir registros/propósito para no romper
 // datos existentes en localStorage.
@@ -32,12 +33,6 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
-}
-
-function uid(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : String(Date.now()) + Math.round(Math.random() * 1e9);
 }
 
 export const localDataSource: DataSource = {
