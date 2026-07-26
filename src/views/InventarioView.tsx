@@ -8,6 +8,7 @@ import {
 } from '../hooks/useInventory';
 import { NumField, SelectField, TextField } from '../components/Field';
 import FotoInput from '../components/FotoInput';
+import ImageLightbox from '../components/ImageLightbox';
 import RegistrosPanel from '../components/RegistrosPanel';
 import ResultCard from '../components/ResultCard';
 import { Empty, ErrorState, Loading } from '../components/States';
@@ -79,6 +80,7 @@ export default function InventarioView() {
     useInventory();
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [editing, setEditing] = useState<Animal | null>(null);
+  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
 
   const visibles = useMemo(
     () => (filtro === 'todos' ? animals : animals.filter((a) => a.estado === filtro)),
@@ -197,7 +199,11 @@ export default function InventarioView() {
                 <strong>{a.identificador}</strong>
                 <span className={`chip ${ESTADO_CHIP[a.estado]}`}>{a.estado}</span>
               </div>
-              {a.fotoUrl && <img className="foto-thumb" src={a.fotoUrl} alt={`Foto de ${a.identificador}`} />}
+              {a.fotoUrl && (
+                <button className="foto-thumb" onClick={() => setFotoAmpliada(a.fotoUrl!)} aria-label={`Ampliar foto de ${a.identificador}`}>
+                  <img src={a.fotoUrl} alt={`Foto de ${a.identificador}`} />
+                </button>
+              )}
               <div className="meta">
                 <div><span className="l">Tipo</span><span className="d">{a.tipo}</span></div>
                 <div><span className="l">Propósito</span><span className="d">{a.proposito}</span></div>
@@ -228,6 +234,8 @@ export default function InventarioView() {
           );
         })
       )}
+
+      <ImageLightbox src={fotoAmpliada} onClose={() => setFotoAmpliada(null)} />
     </div>
   );
 }
