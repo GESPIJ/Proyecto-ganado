@@ -11,11 +11,12 @@ const schema = Joi.object({
   }),
   CORS_ORIGIN: Joi.string().default('*'),
   // Fotos (opcional): sin S3_ANIMAL_BUCKET la subida de fotos queda desactivada
-  // y el endpoint devuelve fotoUrl:null (fail-safe).
+  // y el endpoint devuelve fotoUrl:null (fail-safe). Se permite '' para poder
+  // dejar las variables vacías en el .env sin romper el arranque.
   AWS_REGION: Joi.string().default('us-east-1'),
-  S3_REGION: Joi.string().optional(),
-  S3_ANIMAL_BUCKET: Joi.string().optional(),
-  S3_PUBLIC_BASE_URL: Joi.string().uri().optional(),
+  S3_REGION: Joi.string().allow('').optional(),
+  S3_ANIMAL_BUCKET: Joi.string().allow('').optional(),
+  S3_PUBLIC_BASE_URL: Joi.string().uri().allow('').optional(),
 }).unknown(true);
 
 function validateEnv(env = process.env) {
