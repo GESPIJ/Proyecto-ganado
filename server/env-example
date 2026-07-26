@@ -1,0 +1,14 @@
+# Mismo cluster de Atlas que trading, pero la base de datos es "ganaderia"
+# (colección "ganado"). Copia la URI del backend de trading y cambia el nombre
+# de la base al final: .../ganaderia?retryWrites=...
+DB_URI=mongodb+srv://usuario:clave@cluster0.xxxxx.mongodb.net/ganaderia
+PORT=3090
+NODE_ENV=development
+# Genera una con: openssl rand -hex 32
+API_KEY=cambiar_por_una_cadena_larga_aleatoria
+CORS_ORIGIN=*
+
+# Fotos (opcional). Vacío = subida de fotos desactivada (el endpoint devuelve fotoUrl:null).
+AWS_REGION=us-east-1
+S3_ANIMAL_BUCKET=
+S3_PUBLIC_BASE_URL=

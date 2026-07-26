@@ -1,0 +1,31 @@
+{
+  "name": "proyecto-ganado-server",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.699.0",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
+    "module-alias": "^2.2.3",
+    "mongoose": "^8.8.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "_moduleAliases": {
+    "@config": "config",
+    "@controllers": "controllers",
+    "@services": "services",
+    "@models": "models",
+    "@routes": "routes",
+    "@middleware": "middleware",
+    "@modules": "modules",
+    "@constants": "constants.js",
+    "@db": "db.js"
+  }
+}
