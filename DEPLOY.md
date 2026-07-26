@@ -39,7 +39,7 @@ cd /home/bot/apps/proyecto-ganado
 npm install
 echo 'VITE_API_URL=http://<host-tailscale>:3090/api' > .env   # el hostname del box en el tailnet
 npm run build                            # genera dist/
-sudo pm2 serve dist 8090 --name ganado-web --spa
+pm2 start serve.cjs --name ganado-web   # servidor estático sin dependencias
 sudo pm2 save
 ```
 Abrir `http://<host-tailscale>:8090` desde un dispositivo en el tailnet → pega la misma `API_KEY`.
@@ -48,7 +48,7 @@ Abrir `http://<host-tailscale>:8090` desde un dispositivo en el tailnet → pega
 ```bash
 cd /home/bot/apps/proyecto-ganado && git pull
 cd server && npm install && sudo pm2 restart ganado-api
-cd ..    && npm install && npm run build && sudo pm2 restart ganado-web
+cd ..    && npm install && npm run build && pm2 restart ganado-web
 ```
 
 ## Notas
