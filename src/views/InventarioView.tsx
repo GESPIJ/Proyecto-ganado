@@ -49,6 +49,12 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Solo coloreamos el "resultado" (verde/rojo) cuando hubo una venta real registrada;
+// si no, la inversión no debe lucir como pérdida.
+function tieneVenta(a: Animal): boolean {
+  return a.valorVenta != null && a.valorVenta > 0;
+}
+
 function nuevoAnimal(): Animal {
   return {
     id: uid(),
@@ -124,7 +130,7 @@ export default function InventarioView() {
         <ResultCard
           label="Resultado neto"
           value={fmtMoney(totals.resultadoNeto)}
-          tone={totals.resultadoNeto >= 0 ? 'pos' : 'neg'}
+          tone={totals.valorVendido > 0 ? (totals.resultadoNeto >= 0 ? 'pos' : 'neg') : 'default'}
           wide
         />
       </div>
@@ -214,7 +220,7 @@ export default function InventarioView() {
                 <div><span className="l">Inversión</span><span className="d">{fmtMoney(inversionAnimal(a))}</span></div>
                 {a.valorVenta != null && <div><span className="l">Venta</span><span className="d">{fmtMoney(a.valorVenta)}</span></div>}
                 {a.estado !== 'activo' && (
-                  <div><span className="l">Resultado</span><span className={`d ${res >= 0 ? 'pos' : 'neg'}`}>{fmtMoney(res)}</span></div>
+                  <div><span className="l">Resultado</span><span className={`d${tieneVenta(a) ? (res >= 0 ? ' pos' : ' neg') : ''}`}>{fmtMoney(res)}</span></div>
                 )}
               </div>
               {a.notas && <div className="help" style={{ marginTop: 8 }}>{a.notas}</div>}
