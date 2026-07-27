@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Props {
   title?: string;
@@ -7,7 +8,8 @@ interface Props {
 }
 
 /** Modal centrado (overlay). Cierra con clic en el fondo, la × o Esc.
- *  La tarjeta scrollea internamente si el contenido es largo. */
+ *  Se renderiza en `document.body` (portal) para que su `position:fixed` sea
+ *  siempre relativo a la pantalla, sin importar el CSS de los ancestros. */
 export default function Modal({ title, onClose, children }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -21,7 +23,7 @@ export default function Modal({ title, onClose, children }: Props) {
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="modal" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
@@ -30,6 +32,7 @@ export default function Modal({ title, onClose, children }: Props) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -23,15 +23,26 @@ const TYPES = {
   '.map': 'application/json',
 };
 
-function send(res, status, body, type) {
-  res.writeHead(status, { 'Content-Type': type || 'text/plain; charset=utf-8' });
+// Cache-Control por ruta:
+//  - /assets/* llevan hash de contenido → cachear fuerte (immutable).
+//  - service worker / html / manifest → NO cachear (así el SW se actualiza y
+//    Cloudflare no sirve versiones viejas; era la causa de "no veo mi cambio").
+function cacheFor(rel) {
+  if (/^\/?assets\//.test(rel)) return 'public, max-age=31536000, immutable';
+  return 'no-cache';
+}
+
+function send(res, status, body, type, cacheControl) {
+  const headers = { 'Content-Type': type || 'text/plain; charset=utf-8' };
+  if (cacheControl) headers['Cache-Control'] = cacheControl;
+  res.writeHead(status, headers);
   res.end(body);
 }
 
 function serveIndex(res) {
   fs.readFile(path.join(ROOT, 'index.html'), (err, html) => {
     if (err) return send(res, 404, 'Not found');
-    send(res, 200, html, TYPES['.html']);
+    send(res, 200, html, TYPES['.html'], 'no-cache');
   });
 }
 
@@ -47,7 +58,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(filePath, (err, data) => {
       if (err) return serveIndex(res); // fallback SPA
       const ext = path.extname(filePath).toLowerCase();
-      send(res, 200, data, TYPES[ext] || 'application/octet-stream');
+      send(res, 200, data, TYPES[ext] || 'application/octet-stream', cacheFor(rel));
     });
   } catch {
     send(res, 500, 'Server error');
