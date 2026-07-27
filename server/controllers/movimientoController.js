@@ -1,9 +1,17 @@
 const Joi = require('joi');
 const movimientoService = require('@services/movimientoService');
 const logger = require('@modules/logger');
-const { MOVIMIENTO_TIPOS, METODOS_PAGO } = require('@constants');
+const { MOVIMIENTO_TIPOS, METODOS_PAGO, MOVIMIENTO_CATEGORIAS } = require('@constants');
 
 const dateStr = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/);
+const categoria = Joi.string().valid(...Object.values(MOVIMIENTO_CATEGORIAS));
+
+const lineaSchema = Joi.object({
+  id: Joi.string().optional(),
+  monto: Joi.number().min(0).required(),
+  categoria: categoria.required(),
+  concepto: Joi.string().allow('').optional(),
+});
 
 const movimientoSchema = Joi.object({
   id: Joi.string().optional(), // la URL es la autoridad
@@ -12,6 +20,8 @@ const movimientoSchema = Joi.object({
   monto: Joi.number().min(0).required(),
   concepto: Joi.string().allow('').default(''),
   metodo: Joi.string().valid(...Object.values(METODOS_PAGO)).default(METODOS_PAGO.EFECTIVO),
+  categoria: categoria.default(MOVIMIENTO_CATEGORIAS.OTROS),
+  desglose: Joi.array().items(lineaSchema).default([]),
   nota: Joi.string().allow('').optional(),
 });
 
@@ -27,6 +37,13 @@ async function getAll(req, res) {
 async function upsert(req, res) {
   const { error, value } = movimientoSchema.validate(req.body, { stripUnknown: true });
   if (error) return res.status(400).json({ error: error.details[0].message });
+  // Si hay desglose, debe cuadrar con el total.
+  if (value.desglose && value.desglose.length > 0) {
+    const suma = value.desglose.reduce((s, l) => s + l.monto, 0);
+    if (Math.abs(suma - value.monto) > 0.01) {
+      return res.status(400).json({ error: `El desglose (${suma}) no cuadra con el monto (${value.monto})` });
+    }
+  }
   try {
     const mov = await movimientoService.upsertMovimiento(req.params.id, value);
     return res.status(200).json(mov);

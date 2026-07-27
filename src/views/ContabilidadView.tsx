@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { MetodoPago, Movimiento, MovimientoTipo } from '../types';
-import { useContabilidad } from '../hooks/useContabilidad';
+import type { Linea, MetodoPago, Movimiento, MovimientoCategoria, MovimientoTipo } from '../types';
+import { useContabilidad, CATEGORIAS, CATEGORIA_LABEL } from '../hooks/useContabilidad';
 import { setContaAuth, clearContaAuth } from '../api/client';
 import { usingLocal } from '../api';
 import { NumField, SelectField, TextField } from '../components/Field';
 import Modal from '../components/Modal';
 import ResultCard from '../components/ResultCard';
+import DonutCategorias from '../components/DonutCategorias';
 import { Empty, ErrorState, Loading } from '../components/States';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/format';
+
+const CAT_OPTS: { value: MovimientoCategoria; label: string }[] = CATEGORIAS.map((c) => ({ value: c, label: CATEGORIA_LABEL[c] }));
 
 const TIPOS: { value: MovimientoTipo; label: string }[] = [
   { value: 'inversion', label: 'Inversión' },
@@ -39,7 +42,7 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 function nuevoMovimiento(): Movimiento {
-  return { id: uid(), fecha: today(), tipo: 'inversion', monto: 0, concepto: '', metodo: 'efectivo' };
+  return { id: uid(), fecha: today(), tipo: 'inversion', monto: 0, concepto: '', metodo: 'efectivo', categoria: 'otros', desglose: [] };
 }
 
 export default function ContabilidadView() {
@@ -54,7 +57,7 @@ export default function ContabilidadView() {
   useEffect(() => () => clearContaAuth(), []);
 
   const conta = useContabilidad(unlocked);
-  const { movimientos, loading, error, save, remove, reload, totals } = conta;
+  const { movimientos, loading, error, save, remove, reload, totals, porCategoria } = conta;
 
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [editing, setEditing] = useState<Movimiento | null>(null);
@@ -63,6 +66,18 @@ export default function ContabilidadView() {
     () => (filtro === 'todos' ? movimientos : movimientos.filter((m) => m.tipo === filtro)),
     [movimientos, filtro],
   );
+
+  // --- Desglose del movimiento en edición ---
+  const desglose = editing?.desglose ?? [];
+  const sumaDesglose = desglose.reduce((s, l) => s + l.monto, 0);
+  const faltaAsignar = editing ? editing.monto - sumaDesglose : 0;
+  const desgloseCuadra = desglose.length === 0 || Math.abs(faltaAsignar) < 0.01;
+
+  const setDesglose = (lineas: Linea[]) => setEditing((e) => (e ? { ...e, desglose: lineas } : e));
+  const addLinea = () => setDesglose([...desglose, { id: uid(), monto: Math.max(0, faltaAsignar), categoria: 'otros' }]);
+  const updateLinea = (id: string, patch: Partial<Linea>) =>
+    setDesglose(desglose.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  const removeLinea = (id: string) => setDesglose(desglose.filter((l) => l.id !== id));
 
   const entrar = async () => {
     if (!user.trim() || !pass) return;
@@ -88,7 +103,7 @@ export default function ContabilidadView() {
   };
 
   const onGuardar = async () => {
-    if (!editing) return;
+    if (!editing || !desgloseCuadra) return;
     await save({ ...editing, concepto: editing.concepto.trim() || 'Sin concepto' });
     setEditing(null);
   };
@@ -140,6 +155,13 @@ export default function ContabilidadView() {
         />
       </div>
 
+      {movimientos.length > 0 && (
+        <>
+          <h2 className="sec">Por categoría</h2>
+          <DonutCategorias data={porCategoria} />
+        </>
+      )}
+
       {!editing && (
         <button className="btn pri" onClick={() => setEditing(nuevoMovimiento())}>
           + Agregar movimiento
@@ -158,10 +180,49 @@ export default function ContabilidadView() {
             <SelectField label="Método de pago" value={editing.metodo} options={METODOS} onChange={(v) => setEditing({ ...editing, metodo: v })} />
           </div>
           <TextField label="Concepto" value={editing.concepto} onChange={(v) => setEditing({ ...editing, concepto: v })} placeholder="Ej. Compra de mautes, 30 para la fecha" />
+
+          {/* Categoría única (si no hay desglose) o editor de desglose */}
+          {desglose.length === 0 && (
+            <SelectField label="Categoría" value={editing.categoria} options={CAT_OPTS} onChange={(v) => setEditing({ ...editing, categoria: v })} />
+          )}
+          <div style={{ marginBottom: 12 }}>
+            <button className="linkbtn" onClick={() => (desglose.length === 0 ? addLinea() : setDesglose([]))}>
+              {desglose.length === 0 ? '+ Desglosar por categoría' : '✕ Quitar desglose'}
+            </button>
+          </div>
+
+          {desglose.length > 0 && (
+            <div className="proj" style={{ marginTop: 0 }}>
+              {desglose.map((l, i) => (
+                <div key={l.id} className="card" style={{ marginBottom: 10, padding: 12 }}>
+                  <div className="spread" style={{ marginBottom: 8 }}>
+                    <span className="mut" style={{ fontSize: 12 }}>Línea {i + 1}</span>
+                    <button className="linkbtn neg" onClick={() => removeLinea(l.id)}>Quitar</button>
+                  </div>
+                  <div className="fieldgrid">
+                    <NumField label="Monto" value={l.monto} onChange={(v) => updateLinea(l.id, { monto: v })} suffix="USD" />
+                    <SelectField label="Categoría" value={l.categoria} options={CAT_OPTS} onChange={(v) => updateLinea(l.id, { categoria: v })} />
+                  </div>
+                  <TextField label="Concepto (opcional)" value={l.concepto ?? ''} onChange={(v) => updateLinea(l.id, { concepto: v || undefined })} placeholder="Ej. para la Meru" />
+                </div>
+              ))}
+              <button className="btn" onClick={addLinea}>+ Agregar línea</button>
+              <div className="spread" style={{ marginTop: 12 }}>
+                <span className="mut">Asignado</span>
+                <strong>{fmtMoney(sumaDesglose)} / {fmtMoney(editing.monto)}</strong>
+              </div>
+              {!desgloseCuadra && (
+                <div className="help neg" style={{ marginTop: 4 }}>
+                  {faltaAsignar > 0 ? `Falta asignar: ${fmtMoney(faltaAsignar)}` : `Te pasaste por: ${fmtMoney(-faltaAsignar)}`}
+                </div>
+              )}
+            </div>
+          )}
+
           <TextField label="Nota" value={editing.nota ?? ''} onChange={(v) => setEditing({ ...editing, nota: v || undefined })} placeholder="Opcional" />
           <div className="btnrow">
             <button className="btn" onClick={() => setEditing(null)}>Cancelar</button>
-            <button className="btn pri" onClick={onGuardar}>Guardar</button>
+            <button className="btn pri" onClick={onGuardar} disabled={!desgloseCuadra}>Guardar</button>
           </div>
         </Modal>
       )}
@@ -196,7 +257,18 @@ export default function ContabilidadView() {
                 <div><span className="l">Fecha</span><span className="d">{m.fecha}</span></div>
                 <div><span className="l">Tipo</span><span className="d">{TIPO_LABEL[m.tipo]}</span></div>
                 <div><span className="l">Método</span><span className="d">{METODO_LABEL[m.metodo]}</span></div>
+                {m.desglose.length === 0 && <div><span className="l">Categoría</span><span className="d">{CATEGORIA_LABEL[m.categoria]}</span></div>}
               </div>
+              {m.desglose.length > 0 && (
+                <div className="reg-list">
+                  {m.desglose.map((l) => (
+                    <div key={l.id} className="reg-item">
+                      <span>{CATEGORIA_LABEL[l.categoria]}{l.concepto ? ` · ${l.concepto}` : ''}</span>
+                      <span className={esGasto ? 'neg' : 'pos'} style={{ whiteSpace: 'nowrap' }}>{esGasto ? '−' : '+'}{fmtMoney(l.monto)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {m.nota && <div className="help" style={{ marginTop: 8 }}>{m.nota}</div>}
               <div className="btnrow">
                 <button className="btn" onClick={() => setEditing(m)}>Editar</button>

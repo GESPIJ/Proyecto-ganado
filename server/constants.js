@@ -7,6 +7,7 @@ const REGISTRO_TIPOS = { PESO: 'peso', LECHE: 'leche' };
 // Contabilidad
 const MOVIMIENTO_TIPOS = { INVERSION: 'inversion', INGRESO: 'ingreso', GASTO: 'gasto' };
 const METODOS_PAGO = { EFECTIVO: 'efectivo', ZELLE: 'zelle', OTRO: 'otro' };
+const MOVIMIENTO_CATEGORIAS = { MAUTES: 'mautes', VACAS: 'vacas', CAMION: 'camion', FINCA: 'finca', OTROS: 'otros' };
 
 module.exports = {
   ANIMAL_TIPOS,
@@ -15,4 +16,5 @@ module.exports = {
   REGISTRO_TIPOS,
   MOVIMIENTO_TIPOS,
   METODOS_PAGO,
+  MOVIMIENTO_CATEGORIAS,
 };

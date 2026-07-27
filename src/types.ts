@@ -126,6 +126,15 @@ export interface Animal {
 // ---- Contabilidad ----
 export type MovimientoTipo = 'inversion' | 'ingreso' | 'gasto';
 export type MetodoPago = 'efectivo' | 'zelle' | 'otro';
+export type MovimientoCategoria = 'mautes' | 'vacas' | 'camion' | 'finca' | 'otros';
+
+// Línea de desglose de un movimiento por categoría.
+export interface Linea {
+  id: string;
+  monto: number;
+  categoria: MovimientoCategoria;
+  concepto?: string;
+}
 
 export interface Movimiento {
   id: string;
@@ -134,6 +143,8 @@ export interface Movimiento {
   monto: number; // siempre positivo; el signo lo da el tipo
   concepto: string;
   metodo: MetodoPago;
+  categoria: MovimientoCategoria; // categoría del total (cuando NO se desglosa)
+  desglose: Linea[]; // si tiene líneas, su suma == monto
   nota?: string;
 }
 

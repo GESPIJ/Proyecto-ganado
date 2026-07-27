@@ -3,9 +3,13 @@ import { STORAGE_KEY } from './client';
 import { uid } from '../lib/id';
 
 const MOV_KEY = 'ganado.movimientos';
+function normalizeMov(m: Partial<Movimiento>): Movimiento {
+  return { ...(m as Movimiento), categoria: m.categoria ?? 'otros', desglose: m.desglose ?? [] };
+}
 function readMovs(): Movimiento[] {
   try {
-    return JSON.parse(localStorage.getItem(MOV_KEY) ?? '[]') as Movimiento[];
+    const raw = JSON.parse(localStorage.getItem(MOV_KEY) ?? '[]') as Partial<Movimiento>[];
+    return raw.map(normalizeMov);
   } catch {
     return [];
   }
