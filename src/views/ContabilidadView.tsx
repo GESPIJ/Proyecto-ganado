@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MetodoPago, Movimiento, MovimientoTipo } from '../types';
 import { useContabilidad } from '../hooks/useContabilidad';
 import { setContaAuth, clearContaAuth } from '../api/client';
@@ -57,6 +57,13 @@ export default function ContabilidadView() {
 
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [editing, setEditing] = useState<Movimiento | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Al abrir alta/edición, desplazar la vista al formulario (si no, en el móvil
+  // aparece arriba de la lista y parece que "no pasa nada").
+  useEffect(() => {
+    if (editing) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [editing]);
 
   const visibles = useMemo(
     () => (filtro === 'todos' ? movimientos : movimientos.filter((m) => m.tipo === filtro)),
@@ -146,7 +153,7 @@ export default function ContabilidadView() {
       )}
 
       {editing && (
-        <div className="card">
+        <div className="card" ref={formRef}>
           <h2 className="sec" style={{ marginTop: 0 }}>
             {movimientos.some((m) => m.id === editing.id) ? 'Editar movimiento' : 'Nuevo movimiento'}
           </h2>

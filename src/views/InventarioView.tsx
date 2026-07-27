@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Animal, AnimalEstado, AnimalProposito, AnimalTipo } from '../types';
 import {
   useInventory,
@@ -87,6 +87,12 @@ export default function InventarioView() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [editing, setEditing] = useState<Animal | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Al abrir alta/edición, desplazar la vista al formulario.
+  useEffect(() => {
+    if (editing) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [editing]);
 
   const visibles = useMemo(
     () => (filtro === 'todos' ? animals : animals.filter((a) => a.estado === filtro)),
@@ -142,7 +148,7 @@ export default function InventarioView() {
       )}
 
       {editing && (
-        <div className="card">
+        <div className="card" ref={formRef}>
           <h2 className="sec" style={{ marginTop: 0 }}>
             {animals.some((a) => a.id === editing.id) ? 'Editar animal' : 'Nuevo animal'}
           </h2>
