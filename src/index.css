@@ -33,7 +33,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 .appbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);
   backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
-  display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px}
+  display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 16px 12px}
 .appbar h1{font-size:18px;font-weight:750;margin:0;letter-spacing:.2px}
 
 main{flex:1;padding:16px 16px 96px;display:flex;flex-direction:column;gap:14px}
