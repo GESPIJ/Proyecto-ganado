@@ -123,6 +123,20 @@ export interface Animal {
   registros: Registro[];
 }
 
+// ---- Contabilidad ----
+export type MovimientoTipo = 'inversion' | 'ingreso' | 'gasto';
+export type MetodoPago = 'efectivo' | 'zelle' | 'otro';
+
+export interface Movimiento {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  tipo: MovimientoTipo;
+  monto: number; // siempre positivo; el signo lo da el tipo
+  concepto: string;
+  metodo: MetodoPago;
+  nota?: string;
+}
+
 // ---- Capa de datos ----
 export interface DataSource {
   listAnimals(): Promise<Animal[]>;
@@ -131,4 +145,8 @@ export interface DataSource {
   addRegistro(animalId: string, r: Omit<Registro, 'id'>): Promise<Animal>;
   deleteRegistro(animalId: string, registroId: string): Promise<Animal>;
   uploadFoto(animalId: string, file: File): Promise<string | null>; // devuelve fotoUrl o null
+  // Contabilidad
+  listMovimientos(): Promise<Movimiento[]>;
+  saveMovimiento(m: Movimiento): Promise<Movimiento>; // upsert por id
+  deleteMovimiento(id: string): Promise<void>;
 }

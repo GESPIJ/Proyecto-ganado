@@ -1,6 +1,18 @@
-import type { Animal, DataSource, Registro } from '../types';
+import type { Animal, DataSource, Movimiento, Registro } from '../types';
 import { STORAGE_KEY } from './client';
 import { uid } from '../lib/id';
+
+const MOV_KEY = 'ganado.movimientos';
+function readMovs(): Movimiento[] {
+  try {
+    return JSON.parse(localStorage.getItem(MOV_KEY) ?? '[]') as Movimiento[];
+  } catch {
+    return [];
+  }
+}
+function writeMovs(m: Movimiento[]): void {
+  localStorage.setItem(MOV_KEY, JSON.stringify(m));
+}
 
 // Normaliza animales guardados antes de añadir registros/propósito para no romper
 // datos existentes en localStorage.
@@ -75,5 +87,19 @@ export const localDataSource: DataSource = {
     a.fotoUrl = dataUrl;
     write(all);
     return dataUrl;
+  },
+  async listMovimientos() {
+    return readMovs().sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+  },
+  async saveMovimiento(m) {
+    const all = readMovs();
+    const i = all.findIndex((x) => x.id === m.id);
+    if (i >= 0) all[i] = m;
+    else all.push(m);
+    writeMovs(all);
+    return m;
+  },
+  async deleteMovimiento(id) {
+    writeMovs(readMovs().filter((x) => x.id !== id));
   },
 };

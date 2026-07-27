@@ -1,11 +1,17 @@
-import type { Animal, DataSource, Registro } from '../types';
-import { apiBaseUrl, getApiKey } from './client';
+import type { Animal, DataSource, Movimiento, Registro } from '../types';
+import { apiBaseUrl, getApiKey, getContaAuth } from './client';
 
 // Implementación contra el backend Mongo. Misma interfaz que la local, así que
 // activar VITE_API_URL cambia la fuente de datos sin modificar las vistas.
 function headers(extra: Record<string, string> = {}): Record<string, string> {
   const k = getApiKey();
   return { ...extra, ...(k ? { 'x-api-key': k } : {}) };
+}
+
+// Headers para /movimientos: API key + credenciales de contabilidad.
+function contaHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const a = getContaAuth();
+  return { ...headers(extra), ...(a ? { 'x-conta-user': a.user, 'x-conta-key': a.key } : {}) };
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -58,5 +64,21 @@ export const httpDataSource: DataSource = {
     });
     const data = await json<{ fotoUrl: string | null }>(res);
     return data.fotoUrl;
+  },
+  async listMovimientos() {
+    return json<Movimiento[]>(await fetch(`${apiBaseUrl}/movimientos`, { headers: contaHeaders() }));
+  },
+  async saveMovimiento(m) {
+    return json<Movimiento>(
+      await fetch(`${apiBaseUrl}/movimientos/${m.id}`, {
+        method: 'PUT',
+        headers: contaHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(m),
+      }),
+    );
+  },
+  async deleteMovimiento(id) {
+    const res = await fetch(`${apiBaseUrl}/movimientos/${id}`, { method: 'DELETE', headers: contaHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
   },
 };

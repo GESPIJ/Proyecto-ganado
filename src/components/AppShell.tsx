@@ -2,15 +2,18 @@ import { useCallback, useEffect, useState, type FC } from 'react';
 import { NavContext, type TabId } from '../nav';
 import ProjectionsView from '../views/ProjectionsView';
 import InventarioView from '../views/InventarioView';
+import ContabilidadView from '../views/ContabilidadView';
 
 const ICONS: Record<TabId, string> = {
   proyecciones: 'M4 19V5M4 19h16M8 16l3-4 3 3 4-6',
   inventario: 'M4 6h16M4 12h16M4 18h10',
+  contabilidad: 'M3 7h18v10H3zM3 10h18M7 14h4',
 };
 
 const TABS: { id: TabId; label: string; view: FC }[] = [
   { id: 'proyecciones', label: 'Proyecciones', view: ProjectionsView },
   { id: 'inventario', label: 'Inventario', view: InventarioView },
+  { id: 'contabilidad', label: 'Contabilidad', view: ContabilidadView },
 ];
 
 type Theme = 'light' | 'dark';

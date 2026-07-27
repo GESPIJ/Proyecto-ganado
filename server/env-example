@@ -12,3 +12,8 @@ CORS_ORIGIN=*
 AWS_REGION=us-east-1
 S3_ANIMAL_BUCKET=
 S3_PUBLIC_BASE_URL=
+
+# Módulo de contabilidad: usuario + contraseña propios (distintos de la API key).
+# Si quedan vacíos, la contabilidad queda inaccesible (fail-closed).
+CONTA_USER=
+CONTA_KEY=

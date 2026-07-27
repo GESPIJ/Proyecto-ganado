@@ -17,6 +17,10 @@ const schema = Joi.object({
   S3_REGION: Joi.string().allow('').optional(),
   S3_ANIMAL_BUCKET: Joi.string().allow('').optional(),
   S3_PUBLIC_BASE_URL: Joi.string().uri().allow('').optional(),
+  // Candado del módulo de contabilidad. Si faltan, el middleware falla cerrado
+  // (503) y la contabilidad queda inaccesible; el resto de la app sigue igual.
+  CONTA_USER: Joi.string().allow('').optional(),
+  CONTA_KEY: Joi.string().allow('').optional(),
 }).unknown(true);
 
 function validateEnv(env = process.env) {

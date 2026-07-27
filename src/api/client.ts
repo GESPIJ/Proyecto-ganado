@@ -12,3 +12,14 @@ export const API_KEY_STORAGE = 'ganado.apikey';
 export const getApiKey = () => localStorage.getItem(API_KEY_STORAGE) || '';
 export const setApiKey = (k: string) => localStorage.setItem(API_KEY_STORAGE, k);
 export const clearApiKey = () => localStorage.removeItem(API_KEY_STORAGE);
+
+// Credenciales del módulo de contabilidad: SOLO en memoria (no se persisten),
+// así se olvidan al recargar/cerrar la app y la contabilidad pide clave cada vez.
+let contaAuth: { user: string; key: string } | null = null;
+export const setContaAuth = (a: { user: string; key: string }) => {
+  contaAuth = a;
+};
+export const getContaAuth = () => contaAuth;
+export const clearContaAuth = () => {
+  contaAuth = null;
+};

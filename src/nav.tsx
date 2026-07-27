@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-export type TabId = 'proyecciones' | 'inventario';
+export type TabId = 'proyecciones' | 'inventario' | 'contabilidad';
 
 interface Nav {
   navigate: (tab: TabId) => void;

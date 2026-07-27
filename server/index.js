@@ -7,13 +7,14 @@ const mongoose = require('@db');
 const { connectDatabase } = require('@db');
 const { validateEnv } = require('@config/env');
 const { requireApiKey } = require('@middleware/auth');
+const { requireContaAuth } = require('@middleware/contaAuth');
 const logger = require('@modules/logger');
 
 const app = express();
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-api-key');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-api-key, x-conta-user, x-conta-key');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
@@ -34,6 +35,8 @@ app.get('/health', (req, res) => {
 
 app.use('/api', requireApiKey);
 app.use('/api/animals', require('@routes/animals'));
+// Contabilidad: doble candado (API key global + usuario/contraseña propios).
+app.use('/api/movimientos', requireContaAuth, require('@routes/movimientos'));
 
 // Manejo de errores de multer (p. ej. archivo muy grande o formato no soportado).
 app.use((err, req, res, next) => {
