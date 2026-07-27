@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Animal, AnimalEstado, AnimalProposito, AnimalTipo } from '../types';
 import {
   useInventory,
@@ -9,6 +9,7 @@ import {
 import { NumField, SelectField, TextField } from '../components/Field';
 import FotoInput from '../components/FotoInput';
 import ImageLightbox from '../components/ImageLightbox';
+import Modal from '../components/Modal';
 import RegistrosPanel from '../components/RegistrosPanel';
 import ResultCard from '../components/ResultCard';
 import { Empty, ErrorState, Loading } from '../components/States';
@@ -87,12 +88,6 @@ export default function InventarioView() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [editing, setEditing] = useState<Animal | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
-  const formRef = useRef<HTMLDivElement>(null);
-
-  // Al abrir alta/edición, desplazar la vista al formulario.
-  useEffect(() => {
-    if (editing) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [editing]);
 
   const visibles = useMemo(
     () => (filtro === 'todos' ? animals : animals.filter((a) => a.estado === filtro)),
@@ -148,10 +143,10 @@ export default function InventarioView() {
       )}
 
       {editing && (
-        <div className="card" ref={formRef}>
-          <h2 className="sec" style={{ marginTop: 0 }}>
-            {animals.some((a) => a.id === editing.id) ? 'Editar animal' : 'Nuevo animal'}
-          </h2>
+        <Modal
+          title={animals.some((a) => a.id === editing.id) ? 'Editar animal' : 'Nuevo animal'}
+          onClose={() => setEditing(null)}
+        >
           <TextField
             label="Identificador / arete"
             value={editing.identificador}
@@ -184,7 +179,7 @@ export default function InventarioView() {
             <button className="btn" onClick={() => setEditing(null)}>Cancelar</button>
             <button className="btn pri" onClick={onGuardar}>Guardar</button>
           </div>
-        </div>
+        </Modal>
       )}
 
       <h2 className="sec">Animales</h2>
