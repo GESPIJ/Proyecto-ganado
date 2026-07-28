@@ -3,8 +3,14 @@ import { STORAGE_KEY } from './client';
 import { uid } from '../lib/id';
 
 const MOV_KEY = 'ganado.movimientos';
-function normalizeMov(m: Partial<Movimiento>): Movimiento {
-  return { ...(m as Movimiento), categoria: m.categoria ?? 'otros', desglose: m.desglose ?? [] };
+const TIPO_LEGADO: Record<string, Movimiento['tipo']> = { inversion: 'aporte', ingreso: 'venta' };
+function normalizeMov(m: Partial<Movimiento> & { tipo?: string }): Movimiento {
+  return {
+    ...(m as Movimiento),
+    tipo: (TIPO_LEGADO[m.tipo as string] ?? m.tipo) as Movimiento['tipo'],
+    categoria: m.categoria ?? 'otros',
+    desglose: m.desglose ?? [],
+  };
 }
 function readMovs(): Movimiento[] {
   try {

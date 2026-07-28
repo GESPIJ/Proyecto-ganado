@@ -124,7 +124,8 @@ export interface Animal {
 }
 
 // ---- Contabilidad ----
-export type MovimientoTipo = 'inversion' | 'ingreso' | 'gasto';
+// aporte/venta suman a una cuenta; gasto resta; transferencia mueve de origen→destino (total 0).
+export type MovimientoTipo = 'aporte' | 'venta' | 'gasto' | 'transferencia';
 export type MetodoPago = 'efectivo' | 'zelle' | 'otro';
 export type MovimientoCategoria = 'mautes' | 'vacas' | 'camion' | 'finca' | 'otros';
 
@@ -140,11 +141,13 @@ export interface Movimiento {
   id: string;
   fecha: string; // YYYY-MM-DD
   tipo: MovimientoTipo;
-  monto: number; // siempre positivo; el signo lo da el tipo
+  monto: number; // siempre positivo; el signo/efecto lo da el tipo
   concepto: string;
   metodo: MetodoPago;
-  categoria: MovimientoCategoria; // categoría del total (cuando NO se desglosa)
-  desglose: Linea[]; // si tiene líneas, su suma == monto
+  categoria: MovimientoCategoria; // aporte/venta/gasto: categoría del total (si no hay desglose)
+  desglose: Linea[]; // solo aporte; si tiene líneas, su suma == monto
+  origen?: MovimientoCategoria; // solo transferencia
+  destino?: MovimientoCategoria; // solo transferencia
   nota?: string;
 }
 

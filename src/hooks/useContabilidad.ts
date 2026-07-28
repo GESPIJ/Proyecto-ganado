@@ -2,12 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Movimiento, MovimientoCategoria } from '../types';
 import { dataSource } from '../api';
 
-export interface ContaTotals {
-  invertido: number;
-  ingresos: number;
-  gastos: number;
-  balance: number;
-}
+export type Naturaleza = 'liquida' | 'inversion';
 
 export const CATEGORIAS: MovimientoCategoria[] = ['mautes', 'vacas', 'camion', 'finca', 'otros'];
 export const CATEGORIA_LABEL: Record<MovimientoCategoria, string> = {
@@ -17,15 +12,29 @@ export const CATEGORIA_LABEL: Record<MovimientoCategoria, string> = {
   finca: 'Finca',
   otros: 'Otros',
 };
+// Naturaleza de cada cuenta. 'otros' es líquida pero se oculta de gráficos/totales.
+export const NATURALEZA: Record<MovimientoCategoria, Naturaleza> = {
+  mautes: 'liquida', vacas: 'liquida', otros: 'liquida', finca: 'inversion', camion: 'inversion',
+};
+export const esLiquida = (c: MovimientoCategoria) => NATURALEZA[c] === 'liquida';
+// Categorías que se muestran en gráficos/totales (Otros queda fuera).
+export const CATEGORIAS_VISIBLES: MovimientoCategoria[] = ['mautes', 'vacas', 'camion', 'finca'];
+export const LIQUIDAS_VISIBLES: MovimientoCategoria[] = ['mautes', 'vacas'];
+export const INVERSION_CATS: MovimientoCategoria[] = ['finca', 'camion'];
 
-/** El monto con signo según el tipo (gasto negativo). */
-export function montoConSigno(m: Movimiento): number {
-  return m.tipo === 'gasto' ? -m.monto : m.monto;
+export interface ContaTotals {
+  liquido: number;
+  invertido: number;
+  total: number;
+  otros: number;
 }
 
-/** Atribución de un movimiento a categorías, con signo por tipo. Usa el desglose
- *  si existe; si no, atribuye todo el monto a su categoría única. */
+/** Deltas por categoría de un movimiento (el efecto en cada cuenta). */
 export function atribucion(m: Movimiento): { categoria: MovimientoCategoria; neto: number }[] {
+  if (m.tipo === 'transferencia') {
+    if (!m.origen || !m.destino) return [];
+    return [{ categoria: m.origen, neto: -m.monto }, { categoria: m.destino, neto: m.monto }];
+  }
   const signo = m.tipo === 'gasto' ? -1 : 1;
   if (m.desglose && m.desglose.length > 0) {
     return m.desglose.map((l) => ({ categoria: l.categoria, neto: signo * l.monto }));
@@ -75,19 +84,8 @@ export function useContabilidad(enabled: boolean) {
     [reload],
   );
 
-  const totals = useMemo<ContaTotals>(() => {
-    const t: ContaTotals = { invertido: 0, ingresos: 0, gastos: 0, balance: 0 };
-    for (const m of movimientos) {
-      if (m.tipo === 'inversion') t.invertido += m.monto;
-      else if (m.tipo === 'ingreso') t.ingresos += m.monto;
-      else t.gastos += m.monto;
-    }
-    t.balance = t.invertido + t.ingresos - t.gastos;
-    return t;
-  }, [movimientos]);
-
-  // Neto por categoría (inversión/ingreso suman, gasto resta).
-  const porCategoria = useMemo<Record<MovimientoCategoria, number>>(() => {
+  // Saldo por categoría (cuenta): aportes/ventas suman, gastos restan, transferencias mueven.
+  const saldoPorCategoria = useMemo<Record<MovimientoCategoria, number>>(() => {
     const acc = { mautes: 0, vacas: 0, camion: 0, finca: 0, otros: 0 } as Record<MovimientoCategoria, number>;
     for (const m of movimientos) {
       for (const a of atribucion(m)) acc[a.categoria] += a.neto;
@@ -95,5 +93,12 @@ export function useContabilidad(enabled: boolean) {
     return acc;
   }, [movimientos]);
 
-  return { movimientos, loading, error, save, remove, reload, totals, porCategoria };
+  const totals = useMemo<ContaTotals>(() => {
+    const sum = (cats: MovimientoCategoria[]) => cats.reduce((s, c) => s + saldoPorCategoria[c], 0);
+    const liquido = sum(LIQUIDAS_VISIBLES);
+    const invertido = sum(INVERSION_CATS);
+    return { liquido, invertido, total: liquido + invertido, otros: saldoPorCategoria.otros };
+  }, [saldoPorCategoria]);
+
+  return { movimientos, loading, error, save, remove, reload, totals, saldoPorCategoria };
 }

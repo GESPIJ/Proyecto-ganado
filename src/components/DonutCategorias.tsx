@@ -1,5 +1,5 @@
 import type { MovimientoCategoria } from '../types';
-import { CATEGORIAS, CATEGORIA_LABEL } from '../hooks/useContabilidad';
+import { CATEGORIAS_VISIBLES, CATEGORIA_LABEL } from '../hooks/useContabilidad';
 import { fmtMoney } from '../lib/format';
 
 export const CAT_COLOR: Record<MovimientoCategoria, string> = {
@@ -13,10 +13,10 @@ export const CAT_COLOR: Record<MovimientoCategoria, string> = {
 /** Dona (SVG puro) del neto por categoría + leyenda. Los netos ≤ 0 se listan
  *  en la leyenda pero no dibujan arco. */
 export default function DonutCategorias({ data }: { data: Record<MovimientoCategoria, number> }) {
-  const conValor = CATEGORIAS.filter((c) => Math.abs(data[c]) > 0.005);
+  const conValor = CATEGORIAS_VISIBLES.filter((c) => Math.abs(data[c]) > 0.005);
   if (conValor.length === 0) return null;
 
-  const positivos = CATEGORIAS.filter((c) => data[c] > 0);
+  const positivos = CATEGORIAS_VISIBLES.filter((c) => data[c] > 0);
   const totalPos = positivos.reduce((s, c) => s + data[c], 0);
 
   const r = 40;
